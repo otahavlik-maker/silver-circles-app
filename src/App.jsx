@@ -38,7 +38,100 @@ import {
   CheckCircle2,
   Plus,
 } from 'lucide-react';
+import HybridMailInterface from './components/HybridMailInterface';
+import ExpenseLedger from './components/ExpenseLedger';
+import CivicDashboard from './components/CivicDashboard';
+import MemorialMode from './components/MemorialMode';
+const CarerDashboard = () => {
+  const { unlockVault, encryptionKey, setViewMode } = useContext(AppContext);
+  const [pwd, setPwd] = useState('');
+  const [showMemorial, setShowMemorial] = useState(false); // State for the Sunset Mode
 
+  if (!encryptionKey)
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <Card title="Carer Vault Locked">
+          <p className="text-sm text-slate-500 mb-4">
+            Enter password to decrypt data.
+          </p>
+          <input
+            type="password"
+            value={pwd}
+            onChange={(e) => setPwd(e.target.value)}
+            className="w-full p-3 bg-slate-50 rounded-xl mb-4"
+            placeholder="Password"
+          />
+          <Button onClick={() => unlockVault(pwd)}>Unlock</Button>
+          <button
+            onClick={() => signOut(auth)}
+            className="text-xs text-slate-400 mt-4 w-full"
+          >
+            Log Out
+          </button>
+        </Card>
+      </div>
+    );
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-24 relative">
+      {/* OVERLAY: Memorial Mode */}
+      {showMemorial && <MemorialMode onClose={() => setShowMemorial(false)} />}
+
+      <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center">
+        <h1 className="font-bold text-slate-800 flex items-center gap-2">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg text-white flex items-center justify-center">
+            S
+          </div>{' '}
+          SilverCircles
+        </h1>
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={Settings}
+          onClick={() => setViewMode('senior')}
+        >
+          Switch
+        </Button>
+      </header>
+      
+      <main className="max-w-2xl mx-auto p-4 space-y-6">
+        {/* Header Section */}
+        <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-lg flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold">Hi, Sarah</h2>
+            <p className="text-indigo-200 text-sm">Caring for: Arthur</p>
+          </div>
+          <Shield size={24} />
+        </div>
+        
+        {/* Civic Radar (Full Width) */}
+        <CivicDashboard />
+
+        {/* Modules Grid (2x2) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <VitalsModule />
+          <MedicationsModule />
+          <HybridMailInterface />
+          <ExpenseLedger />
+        </div>
+
+        {/* Danger Zone / Admin Footer */}
+        <div className="pt-12 border-t border-slate-200 mt-8">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+            Advanced Administration
+          </p>
+          <button 
+            onClick={() => setShowMemorial(true)}
+            className="w-full py-3 border border-slate-300 rounded-xl text-slate-500 text-sm hover:bg-slate-100 flex items-center justify-center gap-2 transition-colors"
+          >
+            <Lock size={14} />
+            Access Sunset Protocol (Memorial Mode)
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+};
 // ⚠️ PASTE YOUR FIREBASE KEYS HERE ⚠️
 const firebaseConfig = {
   apiKey: 'AIzaSyCtCjATLBSM6bkzt8bfGcs69FgQkfoTlZs',
@@ -432,113 +525,7 @@ const MedicationsModule = () => {
   );
 };
 
-const CarerDashboard = () => {
-  const { unlockVault, encryptionKey, setViewMode } = useContext(AppContext);
-  const [pwd, setPwd] = useState('');
 
-  if (!encryptionKey)
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <Card title="Carer Vault Locked">
-          <p className="text-sm text-slate-500 mb-4">
-            Enter password to decrypt data.
-          </p>
-          <input
-            type="password"
-            value={pwd}
-            onChange={(e) => setPwd(e.target.value)}
-            className="w-full p-3 bg-slate-50 rounded-xl mb-4"
-            placeholder="Password"
-          />
-          <Button onClick={() => unlockVault(pwd)}>Unlock</Button>
-          <button
-            onClick={() => signOut(auth)}
-            className="text-xs text-slate-400 mt-4 w-full"
-          >
-            Log Out
-          </button>
-        </Card>
-      </div>
-    );
-
-  return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center">
-        <h1 className="font-bold text-slate-800 flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg text-white flex items-center justify-center">
-            S
-          </div>{' '}
-          SilverCircles
-        </h1>
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={Settings}
-          onClick={() => setViewMode('senior')}
-        >
-          Switch
-        </Button>
-      </header>
-      <main className="max-w-2xl mx-auto p-4 space-y-6">
-        <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-lg flex justify-between items-start">
-          <div>
-            <h2 className="text-2xl font-bold">Hi, Sarah</h2>
-            <p className="text-indigo-200 text-sm">Caring for: Arthur</p>
-          </div>
-          <Shield size={24} />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <VitalsModule />
-          <MedicationsModule />
-        </div>
-      </main>
-    </div>
-  );
-};
-
-const SeniorInterface = () => {
-  const { setViewMode } = useContext(AppContext);
-  const Btn = ({ icon: Icon, label, color }) => (
-    <button
-      className={`w-full aspect-square rounded-3xl ${color} flex flex-col items-center justify-center gap-4 shadow-lg active:scale-95`}
-    >
-      <Icon size={48} className="text-white opacity-90" />
-      <span className="text-white font-bold text-xl">{label}</span>
-    </button>
-  );
-  return (
-    <div className="min-h-screen bg-slate-900 p-6 flex flex-col">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-white text-3xl font-bold">
-          Good Morning,
-          <br />
-          <span className="text-indigo-400">Arthur</span>
-        </h1>
-        <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-indigo-500 flex items-center justify-center">
-          <User size={24} className="text-slate-400" />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4 flex-1">
-        <Btn icon={Heart} label="Health" color="bg-rose-600" />
-        <Btn icon={Phone} label="Call" color="bg-green-600" />
-        <Btn icon={Calendar} label="Routine" color="bg-blue-600" />
-        <Btn icon={Users} label="Photos" color="bg-amber-600" />
-      </div>
-      <button className="w-full bg-red-600 mt-6 p-6 rounded-3xl flex items-center justify-center gap-4 shadow-xl animate-pulse">
-        <AlertCircle size={32} className="text-white" />
-        <span className="text-white font-bold text-2xl uppercase">
-          Emergency Help
-        </span>
-      </button>
-      <button
-        onClick={() => setViewMode('carer')}
-        className="mt-8 text-slate-600 text-sm w-full"
-      >
-        Carer Mode
-      </button>
-    </div>
-  );
-};
 
 const AuthScreen = () => {
   const [isLogin, setIsLogin] = useState(true);
