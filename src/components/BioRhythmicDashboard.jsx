@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Sun, Moon, Sunset, Coffee, GlassWater, AlertCircle, Lightbulb, LogOut } from 'lucide-react';
+import { Sun, Moon, Sunset, Coffee, GlassWater, AlertCircle, Lightbulb, LogOut, Dumbbell } from 'lucide-react';
+import SilverGym from './SilverGym'; // <--- IMPORT TĚLOCVIČNY
 
 // Sub-component: The Virtual Dog
 const PupPal = ({ hydrationLevel }) => {
@@ -25,10 +26,11 @@ const PupPal = ({ hydrationLevel }) => {
   );
 };
 
-// Main Component - Accepting the onExit prop now!
+// Main Component
 const BioRhythmicDashboard = ({ onExit }) => {
   const [simulatedHour, setSimulatedHour] = useState(10); 
   const [hydration, setHydration] = useState(60);
+  const [showGym, setShowGym] = useState(false); // <--- STAV PRO TĚLOCVIČNU
 
   // Determine the Phase based on Hour
   const getPhase = (hour) => {
@@ -71,22 +73,19 @@ const BioRhythmicDashboard = ({ onExit }) => {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-1000 ${currentTheme.bg} ${currentTheme.text} flex flex-col p-6`}>
+    <div className={`min-h-screen transition-colors duration-1000 ${currentTheme.bg} ${currentTheme.text} flex flex-col p-6 relative`}>
       
-      {/* Dev Controls - Fixed visibility and added EXIT button */}
+      {/* OVERLAY: Silver Gym */}
+      {showGym && <SilverGym onClose={() => setShowGym(false)} />}
+
+      {/* Dev Controls */}
       <div className="mb-6 p-2 bg-white/20 backdrop-blur border border-white/30 rounded-xl flex gap-2 text-xs justify-center items-center shadow-lg">
         <span className="hidden sm:inline opacity-70">Dev Time:</span>
         <button onClick={() => setSimulatedHour(10)} className="bg-white/80 text-black px-2 py-1 rounded hover:bg-white font-bold">Day</button>
         <button onClick={() => setSimulatedHour(17)} className="bg-orange-100 text-orange-900 px-2 py-1 rounded hover:bg-orange-200 font-bold">Dusk</button>
         <button onClick={() => setSimulatedHour(22)} className="bg-slate-800 text-white px-2 py-1 rounded hover:bg-slate-700 font-bold">Night</button>
-        
         <div className="w-px h-6 bg-black/20 mx-2"></div>
-        
-        {/* THE EXIT BUTTON */}
-        <button 
-          onClick={onExit} 
-          className="bg-rose-600 text-white px-3 py-1 rounded font-bold hover:bg-rose-700 flex items-center gap-1 shadow-md"
-        >
+        <button onClick={onExit} className="bg-rose-600 text-white px-3 py-1 rounded font-bold hover:bg-rose-700 flex items-center gap-1 shadow-md">
           <LogOut size={12} /> EXIT
         </button>
       </div>
@@ -100,7 +99,7 @@ const BioRhythmicDashboard = ({ onExit }) => {
         <div className="animate-pulse">{currentTheme.icon}</div>
       </div>
 
-      {/* NIGHT MODE: Reduced Complexity */}
+      {/* NIGHT MODE */}
       {phase === 'NIGHT' ? (
         <div className="flex-1 flex flex-col gap-6 justify-center">
           <button className="flex-1 bg-rose-900 rounded-3xl flex items-center justify-center gap-4 border-2 border-rose-700 shadow-2xl shadow-rose-900/50 active:scale-95 transition-transform">
@@ -113,7 +112,7 @@ const BioRhythmicDashboard = ({ onExit }) => {
           </button>
         </div>
       ) : (
-        /* DAY/DUSK MODE: Full Interface */
+        /* DAY/DUSK MODE */
         <div className="grid grid-cols-2 gap-4 flex-1 content-start">
           <div className="col-span-2 mb-4">
              <PupPal hydrationLevel={hydration} />
@@ -127,9 +126,13 @@ const BioRhythmicDashboard = ({ onExit }) => {
             <span className="font-bold text-xl">Drink</span>
           </button>
 
-          <button className="bg-white text-slate-800 p-6 rounded-3xl shadow-lg active:scale-95 transition-transform flex flex-col items-center gap-2 col-span-1">
-            <Coffee size={48} className="text-amber-800" />
-            <span className="font-bold text-xl">Routine</span>
+          {/* NEW: EXERCISE BUTTON */}
+          <button 
+            onClick={() => setShowGym(true)}
+            className="bg-white text-emerald-800 p-6 rounded-3xl shadow-lg active:scale-95 transition-transform flex flex-col items-center gap-2 col-span-1 border-2 border-emerald-100"
+          >
+            <Dumbbell size={48} className="text-emerald-600" />
+            <span className="font-bold text-xl">Exercise</span>
           </button>
 
           <div className="col-span-2 bg-white/50 p-6 rounded-3xl text-center border-2 border-white/50">
@@ -137,7 +140,7 @@ const BioRhythmicDashboard = ({ onExit }) => {
              <p className="text-lg leading-relaxed">
                {hydration < 50 
                  ? "Arthur, please have a glass of water. Your dog looks thirsty!" 
-                 : "Great job staying hydrated today! The dog is happy."}
+                 : "Great job! Now, how about some light exercise?"}
              </p>
           </div>
         </div>

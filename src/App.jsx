@@ -37,7 +37,12 @@ import {
   AlertCircle,
   CheckCircle2,
   Plus,
-  Camera, // <--- TOTO NÁM CHYBĚLO
+  Camera,
+  Syringe,      // NOVÉ
+  Pill,         // NOVÉ
+  ShieldAlert,  // NOVÉ
+  Clock,        // NOVÉ
+  AlertTriangle // NOVÉ
 } from 'lucide-react';
 import HybridMailInterface from './components/HybridMailInterface';
 import ExpenseLedger from './components/ExpenseLedger';
@@ -46,6 +51,7 @@ import MemorialMode from './components/MemorialMode';
 import BioRhythmicDashboard from './components/BioRhythmicDashboard';
 import LegalVaultAccess from './components/LegalVaultAccess';
 import ARMemoryWall from './components/ARMemoryWall';
+import ClinicalMedicationManager from './components/ClinicalMedicationManager';
 const CarerDashboard = () => {
   const { unlockVault, encryptionKey, setViewMode } = useContext(AppContext);
   const [pwd, setPwd] = useState('');
@@ -118,7 +124,7 @@ const CarerDashboard = () => {
         {/* Core Modules Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <VitalsModule />
-          <MedicationsModule />
+          <ClinicalMedicationManager /> {/* <--- TOTO JSME ZMĚNILI */}
           <HybridMailInterface />
           <ExpenseLedger />
         </div>
@@ -635,17 +641,21 @@ const SetupScreen = () => (
 
 // ⚠️ ADDED LOGIC: This component was missing from your snippet but is required to make it run
 const AppContent = () => {
-  const { user, viewMode, loading } = useContext(AppContext);
+  const { user, viewMode, loading, setViewMode } = useContext(AppContext); // <--- Důležité: přidali jsme setViewMode
+  
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         Loading...
       </div>
     );
+  
   if (!user) return <AuthScreen />;
   
-  // UPGRADE: Use the new Bio-Rhythmic Dashboard for Seniors
-  if (viewMode === 'senior') return <BioRhythmicDashboard onExit={() => setViewMode('carer')} />;
+  // ZDE BYLA CHYBA: Chybělo předání funkce onExit
+  if (viewMode === 'senior') {
+    return <BioRhythmicDashboard onExit={() => setViewMode('carer')} />;
+  }
   
   return <CarerDashboard />;
 };
