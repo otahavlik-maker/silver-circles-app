@@ -18,7 +18,7 @@ const NurseMode = () => {
     },
     { 
       id: 2, 
-      name: 'Arthur (79)', 
+      name: 'Otakar (79)', 
       condition: 'Leg Ulcer', 
       acuity: 'P2', 
       status: 'STABLE', 
