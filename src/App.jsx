@@ -37,15 +37,20 @@ import {
   AlertCircle,
   CheckCircle2,
   Plus,
+  Camera, // <--- TOTO NÁM CHYBĚLO
 } from 'lucide-react';
 import HybridMailInterface from './components/HybridMailInterface';
 import ExpenseLedger from './components/ExpenseLedger';
 import CivicDashboard from './components/CivicDashboard';
 import MemorialMode from './components/MemorialMode';
+import BioRhythmicDashboard from './components/BioRhythmicDashboard';
+import LegalVaultAccess from './components/LegalVaultAccess';
+import ARMemoryWall from './components/ARMemoryWall';
 const CarerDashboard = () => {
   const { unlockVault, encryptionKey, setViewMode } = useContext(AppContext);
   const [pwd, setPwd] = useState('');
-  const [showMemorial, setShowMemorial] = useState(false); // State for the Sunset Mode
+  const [showMemorial, setShowMemorial] = useState(false);
+  const [showAR, setShowAR] = useState(false); // New State for AR
 
   if (!encryptionKey)
     return (
@@ -76,13 +81,16 @@ const CarerDashboard = () => {
     <div className="min-h-screen bg-slate-50 pb-24 relative">
       {/* OVERLAY: Memorial Mode */}
       {showMemorial && <MemorialMode onClose={() => setShowMemorial(false)} />}
+      
+      {/* OVERLAY: AR Memory Wall */}
+      {showAR && <ARMemoryWall onClose={() => setShowAR(false)} />}
 
       <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center">
         <h1 className="font-bold text-slate-800 flex items-center gap-2">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg text-white flex items-center justify-center">
             S
           </div>{' '}
-          SilverCircles
+          CareSync UK
         </h1>
         <Button
           variant="ghost"
@@ -104,10 +112,10 @@ const CarerDashboard = () => {
           <Shield size={24} />
         </div>
         
-        {/* Civic Radar (Full Width) */}
+        {/* Sphere 5: Civic Radar */}
         <CivicDashboard />
 
-        {/* Modules Grid (2x2) */}
+        {/* Core Modules Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <VitalsModule />
           <MedicationsModule />
@@ -115,18 +123,33 @@ const CarerDashboard = () => {
           <ExpenseLedger />
         </div>
 
-        {/* Danger Zone / Admin Footer */}
+        {/* Sphere 5: Legal Vault (Emergency) */}
+        <div className="mt-8">
+          <LegalVaultAccess />
+        </div>
+
+        {/* Sphere 7 & 8: Advanced Footer */}
         <div className="pt-12 border-t border-slate-200 mt-8">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-            Advanced Administration
+            Future & Legacy Protocols
           </p>
-          <button 
-            onClick={() => setShowMemorial(true)}
-            className="w-full py-3 border border-slate-300 rounded-xl text-slate-500 text-sm hover:bg-slate-100 flex items-center justify-center gap-2 transition-colors"
-          >
-            <Lock size={14} />
-            Access Sunset Protocol (Memorial Mode)
-          </button>
+          <div className="grid grid-cols-1 gap-3">
+            <button 
+              onClick={() => setShowAR(true)}
+              className="w-full py-3 bg-slate-900 text-white rounded-xl text-sm hover:bg-slate-800 flex items-center justify-center gap-2 transition-colors shadow-lg shadow-slate-300"
+            >
+              <Camera size={16} />
+              Launch AR Memory Wall (Beta)
+            </button>
+            
+            <button 
+              onClick={() => setShowMemorial(true)}
+              className="w-full py-3 border border-slate-300 rounded-xl text-slate-500 text-sm hover:bg-slate-100 flex items-center justify-center gap-2 transition-colors"
+            >
+              <Lock size={14} />
+              Access Sunset Protocol
+            </button>
+          </div>
         </div>
       </main>
     </div>
@@ -620,7 +643,10 @@ const AppContent = () => {
       </div>
     );
   if (!user) return <AuthScreen />;
-  if (viewMode === 'senior') return <SeniorInterface />;
+  
+  // UPGRADE: Use the new Bio-Rhythmic Dashboard for Seniors
+  if (viewMode === 'senior') return <BioRhythmicDashboard onExit={() => setViewMode('carer')} />;
+  
   return <CarerDashboard />;
 };
 
