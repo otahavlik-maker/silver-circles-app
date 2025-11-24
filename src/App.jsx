@@ -1,10 +1,19 @@
+// src/App.jsx - FINAL RECONSTRUCTED AND CORRECTED VERSION
+
 import React, { useState, useEffect, useContext, createContext } from 'react';
 import { initializeApp } from 'firebase/app';
-import { ErrorBoundary } from 'react-error-boundary'; // NOVÉ
-import { useAppStore } from './store/useAppStore'; // NOVÉ
-import EmergencyFallback from './components/atoms/EmergencyFallback'; // NOVÉ
-import PatientMode from './components/modes/PatientMode'; // NOVÉ
-import NurseMode from './components/modes/NurseMode'; // NOVÉ
+import { ErrorBoundary } from 'react-error-boundary'; 
+import { useAppStore } from './store/useAppStore'; 
+
+// CORE COMPONENTS & UI ELEMENTS
+import EmergencyFallback from './components/atoms/EmergencyFallback';
+import PatientMode from './components/modes/PatientMode';
+import NurseMode from './components/modes/NurseMode';
+import { Button, Card } from './components/atoms/LayoutComponents'; // OPRAVENÝ IMPORT
+import SbarTriageModule from './components/SbarTriageModule'; 
+
+// NEWS2 LOGIC
+import { calculateNEWS2, SCORING_MATRIX } from './utils/NEWS2Score';
 
 // Firebase Auth & Firestore
 import {
@@ -27,16 +36,16 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 
-// Ikony (Sloučené staré i nové)
+// Lucide Icons
 import {
   Activity, Shield, Users, Bell, Menu, X, LogOut, Settings, ChevronRight,
   Heart, Phone, Calendar, Lock, User, AlertCircle, CheckCircle2, Plus,
   Camera, Syringe, Pill, ShieldAlert, Clock, AlertTriangle,
   Eye, Calculator, HeartPulse, Battery, MessageSquare,
-  Wifi, WifiOff // NOVÉ IKONY PRO OFFLINE
+  Wifi, WifiOff
 } from 'lucide-react';
 
-// Vaše komponenty (Zůstávají)
+// Your Components (Complex Modules)
 import HybridMailInterface from './components/HybridMailInterface';
 import ExpenseLedger from './components/ExpenseLedger';
 import CivicDashboard from './components/CivicDashboard';
@@ -50,7 +59,8 @@ import SmartDoorbellStream from './components/SmartDoorbellStream';
 import CareFundingCalculator from './components/CareFundingCalculator';
 import CarerBurnoutTracker from './components/CarerBurnoutTracker';
 
-// ⚠️ VAŠE FIREBASE KLÍČE (ZŮSTÁVAJÍ) ⚠️
+
+// ⚠️ YOUR FIREBASE KEYS ⚠️
 const firebaseConfig = {
   apiKey: 'AIzaSyCtCjATLBSM6bkzt8bfGcs69FgQkfoTlZs',
   authDomain: 'silvercircles-f5e17.firebaseapp.com',
@@ -75,7 +85,7 @@ if (isConfigured) {
 
 const APP_ID = 'silver-circles-core';
 
-// --- CRYPTO SERVICE (ZŮSTÁVÁ) ---
+// --- CRYPTO SERVICE ---
 const CryptoService = {
   ENC_PREFIX: 'enc::',
   deriveKey: async (password, salt) => {
@@ -141,12 +151,12 @@ const CryptoService = {
   },
 };
 
-const AppContext = createContext();
+export const AppContext = createContext();
 
-const AppProvider = ({ children }) => {
+export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [encryptionKey, setEncryptionKey] = useState(null);
-  const [viewMode, setViewMode] = useState('carer'); // Zachováno pro kompatibilitu
+  const [viewMode, setViewMode] = useState('carer'); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -189,8 +199,8 @@ const AppProvider = ({ children }) => {
   );
 };
 
-// --- DATA HOOK (ZŮSTÁVÁ) ---
-const useDataCollection = (collectionName, constraints = []) => {
+// --- DATA HOOK (Exported for component access) ---
+export const useDataCollection = (collectionName, constraints = []) => {
   const { user, encryptionKey } = useContext(AppContext);
   const [data, setData] = useState([]);
 
@@ -239,65 +249,167 @@ const useDataCollection = (collectionName, constraints = []) => {
   return { data, add, remove };
 };
 
-// --- HELPER COMPONENTS (ZŮSTÁVAJÍ) ---
-const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, size = 'md' }) => {
-  const baseStyle = 'rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2';
-  const sizes = { sm: 'px-3 py-1 text-xs', md: 'px-4 py-3 text-sm', lg: 'px-6 py-4 text-lg' };
-  const variants = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200',
-    secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50',
-    danger: 'bg-rose-100 text-rose-600 hover:bg-rose-200',
-    ghost: 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50',
+// --- VITAL SIGNS MODULE (NEWS2) - Exported for shared use ---
+export const VitalsModule = () => {
+  const { data: vitals, add, remove } = useDataCollection('news_vitals', [orderBy('createdAt', 'desc'), limit(5)]);
+  
+  const [inputs, setInputs] = useState({
+    respiratoryRate: '',
+    oxygenSaturation: '',
+    systolicBP: '',
+    pulseRate: '',
+    temperature: '',
+    consciousness: 'alert',
+    oxygenScale: 1, 
+    onSupplementalOxygen: false,
+  });
+  
+  const [newsResult, setNewsResult] = useState(null);
+  
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setInputs(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
-  return (
-    <button onClick={onClick} className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`}>
-      {Icon && <Icon size={size === 'lg' ? 24 : 18} />}
-      {children}
-    </button>
+  
+  const InputField = ({ label, name, unit, required = true }) => (
+    <div className="flex flex-col">
+      <label className="text-xs font-medium text-slate-500 mb-1">{label}</label>
+      <input 
+        type={'text'} 
+        inputMode={'decimal'}
+        name={name} 
+        value={inputs[name]} 
+        onChange={handleInputChange} 
+        placeholder={`Enter ${unit}`} 
+        required={required}
+        className="p-2 bg-slate-50 rounded-lg text-sm border-none focus:ring-2 focus:ring-indigo-200" 
+      />
+    </div>
   );
-};
 
-const Card = ({ children, title, action }) => (
-  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-    {(title || action) && (
-      <div className="flex justify-between items-center mb-4">
-        {title && <h3 className="font-bold text-slate-800">{title}</h3>}
-        {action}
-      </div>
-    )}
-    {children}
-  </div>
-);
+  const logVitals = () => {
+    if (!inputs.respiratoryRate || !inputs.oxygenSaturation || !inputs.systolicBP || !inputs.pulseRate || !inputs.temperature) {
+        alert('Please fill in all core vital signs.');
+        return;
+    }
+      
+    const vitalsData = {
+        respiratoryRate: parseFloat(inputs.respiratoryRate),
+        oxygenSaturation: parseFloat(inputs.oxygenSaturation),
+        systolicBP: parseFloat(inputs.systolicBP),
+        pulseRate: parseFloat(inputs.pulseRate),
+        temperature: parseFloat(inputs.temperature),
+        consciousness: inputs.consciousness,
+        oxygenScale: inputs.oxygenScale,
+        onSupplementalOxygen: inputs.onSupplementalOxygen,
+    };
 
-// --- MODULES (ZŮSTÁVAJÍ) ---
-const VitalsModule = () => {
-  const { data: vitals, add, remove } = useDataCollection('vitals', [orderBy('createdAt', 'desc'), limit(5)]);
-  const [val, setVal] = useState('');
+    const result = calculateNEWS2(vitalsData);
+    setNewsResult(result);
+    
+    add({ 
+        ...vitalsData, 
+        newsScore: result.score, 
+        newsRisk: result.riskLevel,
+        value: `${vitalsData.systolicBP}/${vitalsData.pulseRate} (${result.score} NEWS2)`, 
+    });
+    
+    setInputs({
+        respiratoryRate: '', oxygenSaturation: '', systolicBP: '', pulseRate: '', temperature: '',
+        consciousness: 'alert', oxygenScale: 1, onSupplementalOxygen: false,
+    });
+  };
+  
   return (
-    <Card title="Vital Signs" action={<Activity size={20} className="text-rose-500" />}>
-      <div className="flex gap-2 mb-4">
-        <input type="text" value={val} onChange={(e) => setVal(e.target.value)} placeholder="e.g. 120/80 BP" className="flex-1 p-2 bg-slate-50 rounded-lg text-sm border-none" />
-        <Button size="sm" onClick={() => { add({ value: val }); setVal(''); }}>Log</Button>
+    <Card title="NEWS2 Vital Signs Tracker" action={<HeartPulse size={20} className="text-rose-500" />}>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <InputField label="Resp. Rate (RR)" name="respiratoryRate" unit="breaths/min" />
+        <InputField label="O₂ Saturation" name="oxygenSaturation" unit="%" />
+        <InputField label="Systolic BP" name="systolicBP" unit="mmHg" />
+        <InputField label="Pulse Rate" name="pulseRate" unit="bpm" />
+        <InputField label="Temperature" name="temperature" unit="°C" />
+        <div className="flex flex-col">
+          <label className="text-xs font-medium text-slate-500 mb-1">Consciousness (AVPU)</label>
+          <select
+            name="consciousness" 
+            value={inputs.consciousness} 
+            onChange={handleInputChange}
+            className="p-2 bg-slate-50 rounded-lg text-sm border-none focus:ring-2 focus:ring-indigo-200"
+          >
+            <option value="alert">Alert (A) - Score 0</option>
+            <option value="confused">Confused/V/P/U - Score 3</option>
+          </select>
+        </div>
+        
+        <div className="flex items-center space-x-4 col-span-2 mt-2 p-3 bg-indigo-50 rounded-lg">
+           <div className="flex items-center">
+              <input 
+                type="checkbox" 
+                id="supplementalO2" 
+                name="onSupplementalOxygen" 
+                checked={inputs.onSupplementalOxygen} 
+                onChange={handleInputChange} 
+                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              />
+              <label htmlFor="supplementalO2" className="ml-2 text-sm font-medium text-indigo-700">O₂ Support (Adds 2 points)</label>
+           </div>
+           
+           <div className="flex items-center">
+              <label htmlFor="o2scale" className="text-sm font-medium text-indigo-700 mr-2">O₂ Scale</label>
+              <select
+                id="o2scale"
+                name="oxygenScale" 
+                value={inputs.oxygenScale} 
+                onChange={handleInputChange}
+                className="p-1 bg-white border border-indigo-300 rounded-lg text-xs"
+              >
+                <option value={1}>Standard (1)</option>
+                <option value={2}>COPD/High-Risk (2)</option>
+              </select>
+           </div>
+        </div>
       </div>
-      <div className="space-y-2">
+      
+      <Button onClick={logVitals} className="w-full" Icon={Plus}>Calculate & Log NEWS2 Score</Button>
+      
+      {/* Display Result */}
+      {newsResult && (
+        <div className={`mt-4 p-4 rounded-xl border-l-4 ${newsResult.riskLevel === 'High' ? 'bg-red-50 border-red-500' : newsResult.riskLevel === 'Medium' ? 'bg-amber-50 border-amber-500' : 'bg-green-50 border-green-500'}`}>
+          <div className="flex justify-between items-center mb-1">
+            <span className="font-bold text-lg">Total NEWS2 Score: {newsResult.score}</span>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${newsResult.riskLevel === 'High' ? 'bg-red-200 text-red-800' : newsResult.riskLevel === 'Medium' ? 'bg-amber-200 text-amber-800' : 'bg-green-200 text-green-800'}`}>{newsResult.riskLevel} Risk</span>
+          </div>
+          <p className="text-sm text-slate-700 font-medium">{newsResult.clinicalResponse}</p>
+        </div>
+      )}
+      
+      {/* Historical Data Display */}
+      <div className="mt-6 border-t pt-4 space-y-2">
+        <h4 className="text-sm font-bold text-slate-700 mb-2">Recent Logs</h4>
         {vitals.map((v) => (
           <div key={v.id} className="flex justify-between items-center text-sm p-2 hover:bg-slate-50 rounded-lg group">
-            <span className="font-mono font-medium text-slate-700">{v.value}</span>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">{v.createdAt?.toDate().toLocaleDateString()}</span>
-              <button onClick={() => remove(v.id)} className="opacity-0 group-hover:opacity-100 text-rose-400"><X size={14} /></button>
+            <span className={`font-bold ${v.newsRisk === 'High' ? 'text-red-600' : v.newsRisk === 'Medium' ? 'text-amber-600' : 'text-green-600'}`}>{v.newsScore}</span>
+            <div className="flex flex-col text-right">
+              <span className="font-mono text-xs text-slate-700">{v.value}</span>
+              <span className="text-xs text-slate-400">{v.createdAt?.toDate().toLocaleString()}</span>
             </div>
+            <button onClick={() => remove(v.id)} className="opacity-0 group-hover:opacity-100 text-rose-400"><X size={14} /></button>
           </div>
         ))}
-        {vitals.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No vitals logged recently.</div>}
+        {vitals.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No NEWS2 logs recently.</div>}
       </div>
     </Card>
   );
 };
 
-const MedicationsModule = () => { return null; }; // Ponecháno pro kompatibilitu
 
-// --- AUTH & SETUP (ZŮSTÁVAJÍ) ---
+const MedicationsModule = () => { return null; }; 
+
+
+// --- AUTH & SETUP ---
 const AuthScreen = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -341,7 +453,7 @@ const SetupScreen = () => (
   </div>
 );
 
-// --- VÁŠ PŮVODNÍ CARER DASHBOARD (ZŮSTÁVÁ) ---
+// --- CARER DASHBOARD (Family/Admin Mode) ---
 const CarerDashboard = () => {
   const { unlockVault, encryptionKey, setViewMode } = useContext(AppContext);
   const [pwd, setPwd] = useState('');
@@ -380,7 +492,6 @@ const CarerDashboard = () => {
         <h1 className="font-bold text-slate-800 flex items-center gap-2">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg text-white flex items-center justify-center">S</div> CareSync UK
         </h1>
-        {/* Tlačítko Switch skryjeme, protože teď máme globální RoleSelector */}
       </header>
       
       <main className="max-w-2xl mx-auto p-4 space-y-6">
@@ -397,8 +508,7 @@ const CarerDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <VitalsModule />
-          <ClinicalMedicationManager />
+          {/* ClinicalMedicationManager odtud odstraňujeme! */}
           <HybridMailInterface />
           <ExpenseLedger />
         </div>
@@ -417,9 +527,7 @@ const CarerDashboard = () => {
     </div>
   );
 };
-
 // --- NOVÉ PRVKY (Role & Offline) ---
-
 const RoleSelector = () => {
   const { setMode, currentMode } = useAppStore();
   return (
@@ -444,7 +552,7 @@ const OfflineIndicator = () => {
   );
 };
 
-// --- HLAVNÍ LOGIKA PŘEPÍNÁNÍ ---
+// --- HLAVNÍ LOGIKA PŘEPÍNÁNÍ (AppContent) ---
 const AppContent = () => {
   const { user, loading } = useContext(AppContext);
   const { currentMode } = useAppStore();
@@ -454,13 +562,26 @@ const AppContent = () => {
   
   // ZDE SE ROZHODUJE podle zvolené role:
   if (currentMode === 'PATIENT') return <PatientMode />; // Grandpad
-  if (currentMode === 'NURSE') return <NurseMode />; // Clinical Cockpit
   
-  // Pro FAMILY vrátíme váš původní, komplexní Dashboard
-  return <CarerDashboard />;
+  // Nurse Mode: Nurse Dashboard, NEWS2 a Clinical Meds pod ním.
+  if (currentMode === 'NURSE') return (
+    <>
+      <NurseMode /> 
+      <div className="max-w-2xl mx-auto p-4 space-y-6">
+          <VitalsModule /> 
+          <ClinicalMedicationManager /> {/* PŘIDÁNO ZDE! */}
+      </div>
+    </>
+  );
+  
+  // Family/Admin Mode: Pouze Carer Dashboard (NENÍ ZDE ŽÁDNÝ KLINICKÝ NÁSTROJ)
+  return (
+    <CarerDashboard />
+  );
 };
 
 export default function App() {
+// ... zbytek souboru (beze změny)
   if (!isConfigured) return <SetupScreen />;
   return (
     <ErrorBoundary FallbackComponent={EmergencyFallback}>
