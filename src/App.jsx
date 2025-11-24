@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
 import { initializeApp } from 'firebase/app';
+import { ErrorBoundary } from 'react-error-boundary'; // NOVÉ
+import { useAppStore } from './store/useAppStore'; // NOVÉ
+import EmergencyFallback from './components/atoms/EmergencyFallback'; // NOVÉ
+import PatientMode from './components/modes/PatientMode'; // NOVÉ
+import NurseMode from './components/modes/NurseMode'; // NOVÉ
+
+// Firebase Auth & Firestore
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -19,17 +26,22 @@ import {
   doc,
   deleteDoc,
 } from 'firebase/firestore';
+
+// Ikony (Sloučené staré i nové)
 import {
   Activity, Shield, Users, Bell, Menu, X, LogOut, Settings, ChevronRight,
   Heart, Phone, Calendar, Lock, User, AlertCircle, CheckCircle2, Plus,
   Camera, Syringe, Pill, ShieldAlert, Clock, AlertTriangle,
-  Eye, Calculator, HeartPulse, Battery, MessageSquare // <--- NOVÉ IKONY
+  Eye, Calculator, HeartPulse, Battery, MessageSquare,
+  Wifi, WifiOff // NOVÉ IKONY PRO OFFLINE
 } from 'lucide-react';
+
+// Vaše komponenty (Zůstávají)
 import HybridMailInterface from './components/HybridMailInterface';
 import ExpenseLedger from './components/ExpenseLedger';
 import CivicDashboard from './components/CivicDashboard';
 import MemorialMode from './components/MemorialMode';
-import BioRhythmicDashboard from './components/BioRhythmicDashboard';
+import BioRhythmicDashboard from './components/BioRhythmicDashboard'; 
 import LegalVaultAccess from './components/LegalVaultAccess';
 import ARMemoryWall from './components/ARMemoryWall';
 import ClinicalMedicationManager from './components/ClinicalMedicationManager';
@@ -37,159 +49,8 @@ import LegacyManager from './components/LegacyManager';
 import SmartDoorbellStream from './components/SmartDoorbellStream';
 import CareFundingCalculator from './components/CareFundingCalculator';
 import CarerBurnoutTracker from './components/CarerBurnoutTracker';
-const CarerDashboard = () => {
-  const { unlockVault, encryptionKey, setViewMode } = useContext(AppContext);
-  const [pwd, setPwd] = useState('');
-  
-  // Existing Modals
-  const [showMemorial, setShowMemorial] = useState(false);
-  const [showAR, setShowAR] = useState(false);
-  const [showLegacy, setShowLegacy] = useState(false);
 
-  // NEW Defensive Modals
-  const [showDoorbell, setShowDoorbell] = useState(false);
-  const [showFinance, setShowFinance] = useState(false);
-  const [showBurnout, setShowBurnout] = useState(false);
-
-  if (!encryptionKey)
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <Card title="Carer Vault Locked">
-          <p className="text-sm text-slate-500 mb-4">
-            Enter password to decrypt data.
-          </p>
-          <input
-            type="password"
-            value={pwd}
-            onChange={(e) => setPwd(e.target.value)}
-            className="w-full p-3 bg-slate-50 rounded-xl mb-4"
-            placeholder="Password"
-          />
-          <Button onClick={() => unlockVault(pwd)}>Unlock</Button>
-          <button
-            onClick={() => signOut(auth)}
-            className="text-xs text-slate-400 mt-4 w-full"
-          >
-            Log Out
-          </button>
-        </Card>
-      </div>
-    );
-
-  return (
-    <div className="min-h-screen bg-slate-50 pb-24 relative">
-      {/* OVERLAYS: ORIGINAL */}
-      {showMemorial && <MemorialMode onClose={() => setShowMemorial(false)} />}
-      {showAR && <ARMemoryWall onClose={() => setShowAR(false)} />}
-      {showLegacy && <LegacyManager onClose={() => setShowLegacy(false)} />}
-      
-      {/* OVERLAYS: DEFENSIVE (NEW) */}
-      {showDoorbell && <SmartDoorbellStream onClose={() => setShowDoorbell(false)} />}
-      {showFinance && <CareFundingCalculator onClose={() => setShowFinance(false)} />}
-      {showBurnout && <CarerBurnoutTracker onClose={() => setShowBurnout(false)} />}
-
-      <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center">
-        <h1 className="font-bold text-slate-800 flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg text-white flex items-center justify-center">
-            S
-          </div>{' '}
-          CareSync UK
-        </h1>
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={Settings}
-          onClick={() => setViewMode('senior')}
-        >
-          Switch
-        </Button>
-      </header>
-      
-      <main className="max-w-2xl mx-auto p-4 space-y-6">
-        {/* Header Section */}
-        <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-lg flex justify-between items-start">
-          <div>
-            <h2 className="text-2xl font-bold">Hi, Sarah</h2>
-            <p className="text-indigo-200 text-sm">Caring for: Arthur</p>
-          </div>
-          <Shield size={24} />
-        </div>
-        
-        {/* Sphere 5: Civic Radar */}
-        <CivicDashboard />
-
-        {/* DEFENSE & WELLBEING GRID (NEW) */}
-        <div className="grid grid-cols-3 gap-3">
-          <button 
-            onClick={() => setShowDoorbell(true)}
-            className="bg-slate-800 text-white p-3 rounded-xl flex flex-col items-center justify-center gap-2 text-xs font-bold shadow-lg hover:bg-black transition-colors"
-          >
-            <Eye className="text-red-400 animate-pulse" />
-            Doorbell Cam
-          </button>
-          <button 
-            onClick={() => setShowFinance(true)}
-            className="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl flex flex-col items-center justify-center gap-2 text-xs font-bold shadow-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
-          >
-            <Calculator className="text-emerald-500" />
-            Care Funding
-          </button>
-          <button 
-            onClick={() => setShowBurnout(true)}
-            className="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl flex flex-col items-center justify-center gap-2 text-xs font-bold shadow-sm hover:bg-rose-50 hover:text-rose-700 transition-colors"
-          >
-            <HeartPulse className="text-rose-500" />
-            My Wellbeing
-          </button>
-        </div>
-
-        {/* Core Modules Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <VitalsModule />
-          <ClinicalMedicationManager />
-          <HybridMailInterface />
-          <ExpenseLedger />
-        </div>
-
-        {/* Sphere 5: Legal Vault (Emergency) */}
-        <div className="mt-8">
-          <LegalVaultAccess />
-        </div>
-
-        {/* Legacy Footer */}
-        <div className="pt-12 border-t border-slate-200 mt-8">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-            Future & Legacy Protocols
-          </p>
-          <div className="grid grid-cols-1 gap-3">
-            <button 
-              onClick={() => setShowAR(true)}
-              className="w-full py-3 bg-slate-900 text-white rounded-xl text-sm hover:bg-slate-800 flex items-center justify-center gap-2 transition-colors shadow-lg shadow-slate-300"
-            >
-              <Camera size={16} />
-              Launch AR Memory Wall
-            </button>
-
-            <button 
-              onClick={() => setShowLegacy(true)}
-              className="w-full py-3 bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-sm hover:bg-amber-200 flex items-center justify-center gap-2 transition-colors"
-            >
-              Manage Family Legacy
-            </button>
-            
-            <button 
-              onClick={() => setShowMemorial(true)}
-              className="w-full py-3 border border-slate-300 rounded-xl text-slate-500 text-sm hover:bg-slate-100 flex items-center justify-center gap-2 transition-colors"
-            >
-              Access Sunset Protocol
-            </button>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-};
-// ⚠️ PASTE YOUR FIREBASE KEYS HERE ⚠️
+// ⚠️ VAŠE FIREBASE KLÍČE (ZŮSTÁVAJÍ) ⚠️
 const firebaseConfig = {
   apiKey: 'AIzaSyCtCjATLBSM6bkzt8bfGcs69FgQkfoTlZs',
   authDomain: 'silvercircles-f5e17.firebaseapp.com',
@@ -214,6 +75,7 @@ if (isConfigured) {
 
 const APP_ID = 'silver-circles-core';
 
+// --- CRYPTO SERVICE (ZŮSTÁVÁ) ---
 const CryptoService = {
   ENC_PREFIX: 'enc::',
   deriveKey: async (password, salt) => {
@@ -284,7 +146,7 @@ const AppContext = createContext();
 const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [encryptionKey, setEncryptionKey] = useState(null);
-  const [viewMode, setViewMode] = useState('carer');
+  const [viewMode, setViewMode] = useState('carer'); // Zachováno pro kompatibilitu
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -327,6 +189,7 @@ const AppProvider = ({ children }) => {
   );
 };
 
+// --- DATA HOOK (ZŮSTÁVÁ) ---
 const useDataCollection = (collectionName, constraints = []) => {
   const { user, encryptionKey } = useContext(AppContext);
   const [data, setData] = useState([]);
@@ -345,21 +208,9 @@ const useDataCollection = (collectionName, constraints = []) => {
           const raw = doc.data();
           const decrypted = { ...raw, id: doc.id };
           if (encryptionKey) {
-            if (raw.notes)
-              decrypted.notes = await CryptoService.decrypt(
-                raw.notes,
-                encryptionKey
-              );
-            if (raw.value && typeof raw.value === 'string')
-              decrypted.value = await CryptoService.decrypt(
-                raw.value,
-                encryptionKey
-              );
-            if (raw.name && typeof raw.name === 'string')
-              decrypted.name = await CryptoService.decrypt(
-                raw.name,
-                encryptionKey
-              );
+            if (raw.notes) decrypted.notes = await CryptoService.decrypt(raw.notes, encryptionKey);
+            if (raw.value && typeof raw.value === 'string') decrypted.value = await CryptoService.decrypt(raw.value, encryptionKey);
+            if (raw.name && typeof raw.name === 'string') decrypted.name = await CryptoService.decrypt(raw.name, encryptionKey);
           }
           return decrypted;
         })
@@ -373,66 +224,33 @@ const useDataCollection = (collectionName, constraints = []) => {
     if (!user || !db) return;
     const secureData = { ...docData, createdAt: serverTimestamp() };
     if (encryptionKey) {
-      if (docData.notes)
-        secureData.notes = await CryptoService.encrypt(
-          docData.notes,
-          encryptionKey
-        );
-      if (docData.value)
-        secureData.value = await CryptoService.encrypt(
-          docData.value,
-          encryptionKey
-        );
-      if (docData.name)
-        secureData.name = await CryptoService.encrypt(
-          docData.name,
-          encryptionKey
-        );
+      if (docData.notes) secureData.notes = await CryptoService.encrypt(docData.notes, encryptionKey);
+      if (docData.value) secureData.value = await CryptoService.encrypt(docData.value, encryptionKey);
+      if (docData.name) secureData.name = await CryptoService.encrypt(docData.name, encryptionKey);
     }
-    await addDoc(
-      collection(db, `artifacts/${APP_ID}/users/${user.uid}/${collectionName}`),
-      secureData
-    );
+    await addDoc(collection(db, `artifacts/${APP_ID}/users/${user.uid}/${collectionName}`), secureData);
   };
 
   const remove = async (id) => {
     if (!user || !db) return;
-    await deleteDoc(
-      doc(db, `artifacts/${APP_ID}/users/${user.uid}/${collectionName}`, id)
-    );
+    await deleteDoc(doc(db, `artifacts/${APP_ID}/users/${user.uid}/${collectionName}`, id));
   };
 
   return { data, add, remove };
 };
 
-const Button = ({
-  children,
-  onClick,
-  variant = 'primary',
-  className = '',
-  icon: Icon,
-  size = 'md',
-}) => {
-  const baseStyle =
-    'rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2';
-  const sizes = {
-    sm: 'px-3 py-1 text-xs',
-    md: 'px-4 py-3 text-sm',
-    lg: 'px-6 py-4 text-lg',
-  };
+// --- HELPER COMPONENTS (ZŮSTÁVAJÍ) ---
+const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, size = 'md' }) => {
+  const baseStyle = 'rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2';
+  const sizes = { sm: 'px-3 py-1 text-xs', md: 'px-4 py-3 text-sm', lg: 'px-6 py-4 text-lg' };
   const variants = {
-    primary:
-      'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200',
-    secondary:
-      'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50',
+    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200',
+    secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50',
     danger: 'bg-rose-100 text-rose-600 hover:bg-rose-200',
     ghost: 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50',
   };
   return (
-    <button
-      onClick={onClick}
-      className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`}
-    >
+    <button onClick={onClick} className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`}>
       {Icon && <Icon size={size === 'lg' ? 24 : 18} />}
       {children}
     </button>
@@ -451,155 +269,47 @@ const Card = ({ children, title, action }) => (
   </div>
 );
 
+// --- MODULES (ZŮSTÁVAJÍ) ---
 const VitalsModule = () => {
-  const {
-    data: vitals,
-    add,
-    remove,
-  } = useDataCollection('vitals', [orderBy('createdAt', 'desc'), limit(5)]);
+  const { data: vitals, add, remove } = useDataCollection('vitals', [orderBy('createdAt', 'desc'), limit(5)]);
   const [val, setVal] = useState('');
   return (
-    <Card
-      title="Vital Signs"
-      action={<Activity size={20} className="text-rose-500" />}
-    >
+    <Card title="Vital Signs" action={<Activity size={20} className="text-rose-500" />}>
       <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          placeholder="e.g. 120/80 BP"
-          className="flex-1 p-2 bg-slate-50 rounded-lg text-sm border-none"
-        />
-        <Button
-          size="sm"
-          onClick={() => {
-            add({ value: val });
-            setVal('');
-          }}
-        >
-          Log
-        </Button>
+        <input type="text" value={val} onChange={(e) => setVal(e.target.value)} placeholder="e.g. 120/80 BP" className="flex-1 p-2 bg-slate-50 rounded-lg text-sm border-none" />
+        <Button size="sm" onClick={() => { add({ value: val }); setVal(''); }}>Log</Button>
       </div>
       <div className="space-y-2">
         {vitals.map((v) => (
-          <div
-            key={v.id}
-            className="flex justify-between items-center text-sm p-2 hover:bg-slate-50 rounded-lg group"
-          >
-            <span className="font-mono font-medium text-slate-700">
-              {v.value}
-            </span>
+          <div key={v.id} className="flex justify-between items-center text-sm p-2 hover:bg-slate-50 rounded-lg group">
+            <span className="font-mono font-medium text-slate-700">{v.value}</span>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">
-                {v.createdAt?.toDate().toLocaleDateString()}
-              </span>
-              <button
-                onClick={() => remove(v.id)}
-                className="opacity-0 group-hover:opacity-100 text-rose-400"
-              >
-                <X size={14} />
-              </button>
+              <span className="text-xs text-slate-400">{v.createdAt?.toDate().toLocaleDateString()}</span>
+              <button onClick={() => remove(v.id)} className="opacity-0 group-hover:opacity-100 text-rose-400"><X size={14} /></button>
             </div>
           </div>
         ))}
-        {vitals.length === 0 && (
-          <div className="text-center text-xs text-slate-400 py-4">
-            No vitals logged recently.
-          </div>
-        )}
+        {vitals.length === 0 && <div className="text-center text-xs text-slate-400 py-4">No vitals logged recently.</div>}
       </div>
     </Card>
   );
 };
 
-const MedicationsModule = () => {
-  const {
-    data: meds,
-    add,
-    remove,
-  } = useDataCollection('medications', [orderBy('time', 'asc')]);
-  const [name, setName] = useState('');
-  const [time, setTime] = useState('');
+const MedicationsModule = () => { return null; }; // Ponecháno pro kompatibilitu
 
-  const handleAdd = () => {
-    if (!name || !time) return;
-    add({ name: name, time: time, lastTaken: serverTimestamp() });
-    setName('');
-    setTime('');
-  };
-
-  return (
-    <Card
-      title="Medications"
-      action={<Bell size={20} className="text-indigo-500" />}
-    >
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Pill Name"
-          className="flex-[2] p-2 bg-slate-50 rounded-lg text-sm border-none"
-        />
-        <input
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          className="flex-1 p-2 bg-slate-50 rounded-lg text-sm border-none"
-        />
-        <Button size="sm" onClick={handleAdd}>
-          Add
-        </Button>
-      </div>
-      <div className="space-y-2">
-        {meds.map((m) => (
-          <div
-            key={m.id}
-            className="flex justify-between items-center text-sm p-3 border-l-4 border-indigo-200 hover:bg-slate-50 rounded-lg group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="bg-indigo-100 text-indigo-600 font-bold px-2 py-1 rounded text-xs">
-                {m.time}
-              </div>
-              <span className="font-medium text-slate-700">{m.name}</span>
-            </div>
-            <button
-              onClick={() => remove(m.id)}
-              className="opacity-0 group-hover:opacity-100 text-rose-400"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ))}
-        {meds.length === 0 && (
-          <div className="text-center text-xs text-slate-400 py-4">
-            No meds scheduled.
-          </div>
-        )}
-      </div>
-    </Card>
-  );
-};
-
-
-
+// --- AUTH & SETUP (ZŮSTÁVAJÍ) ---
 const AuthScreen = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
   const handleAuth = async (e) => {
     e.preventDefault();
     try {
       if (isLogin) await signInWithEmailAndPassword(auth, email, password);
       else await createUserWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      setError(err.message);
-    }
+    } catch (err) { setError(err.message); }
   };
-
   return (
     <div className="min-h-screen bg-indigo-50 flex items-center justify-center p-6">
       <Card>
@@ -608,32 +318,13 @@ const AuthScreen = () => {
           <p className="text-slate-500">Log In</p>
         </div>
         <form onSubmit={handleAuth} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 rounded-xl border bg-slate-50"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 rounded-xl border bg-slate-50"
-            required
-          />
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3 rounded-xl border bg-slate-50" required />
+          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 rounded-xl border bg-slate-50" required />
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <Button variant="primary">{isLogin ? 'Log In' : 'Sign Up'}</Button>
         </form>
         <div className="mt-4 text-center">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-indigo-600 font-bold"
-          >
-            {isLogin ? 'Create Account' : 'Log In'}
-          </button>
+          <button onClick={() => setIsLogin(!isLogin)} className="text-sm text-indigo-600 font-bold">{isLogin ? 'Create Account' : 'Log In'}</button>
         </div>
       </Card>
     </div>
@@ -643,56 +334,141 @@ const AuthScreen = () => {
 const SetupScreen = () => (
   <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6">
     <div className="max-w-md w-full bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
-      <div className="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center mb-6 mx-auto">
-        <Settings size={32} />
-      </div>
+      <div className="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center mb-6 mx-auto"><Settings size={32} /></div>
       <h1 className="text-2xl font-bold text-center mb-2">Setup Required</h1>
-      <p className="text-slate-400 text-center mb-6">
-        The app is running, but it's not connected to the database yet.
-      </p>
-      <div className="bg-slate-900 p-4 rounded-xl border border-slate-700 text-sm font-mono text-indigo-300 mb-6">
-        1. Open App.jsx
-        <br />
-        2. Find "const firebaseConfig"
-        <br />
-        3. Paste your keys there.
-      </div>
-      <button
-        onClick={() => window.location.reload()}
-        className="w-full bg-indigo-600 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-colors"
-      >
-        I Added the Keys (Reload)
-      </button>
+      <p className="text-slate-400 text-center mb-6">Please add Firebase keys in App.jsx</p>
     </div>
   </div>
 );
 
-// ⚠️ ADDED LOGIC: This component was missing from your snippet but is required to make it run
-const AppContent = () => {
-  const { user, viewMode, loading, setViewMode } = useContext(AppContext); // <--- Důležité: přidali jsme setViewMode
+// --- VÁŠ PŮVODNÍ CARER DASHBOARD (ZŮSTÁVÁ) ---
+const CarerDashboard = () => {
+  const { unlockVault, encryptionKey, setViewMode } = useContext(AppContext);
+  const [pwd, setPwd] = useState('');
   
-  if (loading)
+  // Modals
+  const [showMemorial, setShowMemorial] = useState(false);
+  const [showAR, setShowAR] = useState(false);
+  const [showLegacy, setShowLegacy] = useState(false);
+  const [showDoorbell, setShowDoorbell] = useState(false);
+  const [showFinance, setShowFinance] = useState(false);
+  const [showBurnout, setShowBurnout] = useState(false);
+
+  if (!encryptionKey)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        Loading...
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <Card title="Carer Vault Locked">
+          <p className="text-sm text-slate-500 mb-4">Enter password to decrypt data.</p>
+          <input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} className="w-full p-3 bg-slate-50 rounded-xl mb-4" placeholder="Password" />
+          <Button onClick={() => unlockVault(pwd)}>Unlock</Button>
+          <button onClick={() => signOut(auth)} className="text-xs text-slate-400 mt-4 w-full">Log Out</button>
+        </Card>
       </div>
     );
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-24 relative">
+      {/* OVERLAYS */}
+      {showMemorial && <MemorialMode onClose={() => setShowMemorial(false)} />}
+      {showAR && <ARMemoryWall onClose={() => setShowAR(false)} />}
+      {showLegacy && <LegacyManager onClose={() => setShowLegacy(false)} />}
+      {showDoorbell && <SmartDoorbellStream onClose={() => setShowDoorbell(false)} />}
+      {showFinance && <CareFundingCalculator onClose={() => setShowFinance(false)} />}
+      {showBurnout && <CarerBurnoutTracker onClose={() => setShowBurnout(false)} />}
+
+      <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center">
+        <h1 className="font-bold text-slate-800 flex items-center gap-2">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg text-white flex items-center justify-center">S</div> CareSync UK
+        </h1>
+        {/* Tlačítko Switch skryjeme, protože teď máme globální RoleSelector */}
+      </header>
+      
+      <main className="max-w-2xl mx-auto p-4 space-y-6">
+        <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-lg flex justify-between items-start">
+          <div><h2 className="text-2xl font-bold">Hi, Sarah</h2><p className="text-indigo-200 text-sm">Caring for: Arthur</p></div><Shield size={24} />
+        </div>
+        
+        <CivicDashboard />
+
+        <div className="grid grid-cols-3 gap-3">
+          <button onClick={() => setShowDoorbell(true)} className="bg-slate-800 text-white p-3 rounded-xl flex flex-col items-center justify-center gap-2 text-xs font-bold shadow-lg hover:bg-black transition-colors"><Eye className="text-red-400 animate-pulse" /> Doorbell Cam</button>
+          <button onClick={() => setShowFinance(true)} className="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl flex flex-col items-center justify-center gap-2 text-xs font-bold shadow-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors"><Calculator className="text-emerald-500" /> Care Funding</button>
+          <button onClick={() => setShowBurnout(true)} className="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl flex flex-col items-center justify-center gap-2 text-xs font-bold shadow-sm hover:bg-rose-50 hover:text-rose-700 transition-colors"><HeartPulse className="text-rose-500" /> My Wellbeing</button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <VitalsModule />
+          <ClinicalMedicationManager />
+          <HybridMailInterface />
+          <ExpenseLedger />
+        </div>
+
+        <div className="mt-8"><LegalVaultAccess /></div>
+
+        <div className="pt-12 border-t border-slate-200 mt-8">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Future & Legacy Protocols</p>
+          <div className="grid grid-cols-1 gap-3">
+            <button onClick={() => setShowAR(true)} className="w-full py-3 bg-slate-900 text-white rounded-xl text-sm hover:bg-slate-800 flex items-center justify-center gap-2 transition-colors shadow-lg shadow-slate-300"><Camera size={16} /> Launch AR Memory Wall</button>
+            <button onClick={() => setShowLegacy(true)} className="w-full py-3 bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-sm hover:bg-amber-200 flex items-center justify-center gap-2 transition-colors"><Heart size={16} /> Manage Family Legacy</button>
+            <button onClick={() => setShowMemorial(true)} className="w-full py-3 border border-slate-300 rounded-xl text-slate-500 text-sm hover:bg-slate-100 flex items-center justify-center gap-2 transition-colors"><Lock size={14} /> Access Sunset Protocol</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+// --- NOVÉ PRVKY (Role & Offline) ---
+
+const RoleSelector = () => {
+  const { setMode, currentMode } = useAppStore();
+  return (
+    <div className="fixed bottom-6 right-6 z-40 flex gap-2 bg-slate-900/90 p-2 rounded-full backdrop-blur border border-white/20 shadow-2xl">
+      <button onClick={() => setMode('PATIENT')} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${currentMode === 'PATIENT' ? 'bg-yellow-400 text-black shadow-lg' : 'text-white hover:bg-white/10'}`}>Elsie (Patient)</button>
+      <button onClick={() => setMode('NURSE')} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${currentMode === 'NURSE' ? 'bg-blue-500 text-white shadow-lg' : 'text-white hover:bg-white/10'}`}>Nurse</button>
+      <button onClick={() => setMode('FAMILY')} className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${currentMode === 'FAMILY' ? 'bg-emerald-500 text-white shadow-lg' : 'text-white hover:bg-white/10'}`}>Family/Admin</button>
+    </div>
+  );
+};
+
+const OfflineIndicator = () => {
+  const { isOnline, toggleNetwork, pendingSync } = useAppStore();
+  return (
+    <button 
+      onClick={toggleNetwork}
+      className={`fixed top-6 right-6 z-40 px-4 py-2 rounded-full shadow-xl border-2 font-bold flex items-center gap-2 transition-all ${isOnline ? 'bg-emerald-100 border-emerald-500 text-emerald-700' : 'bg-rose-100 border-rose-500 text-rose-700'}`}
+      title="Click to toggle Network Simulation"
+    >
+      {isOnline ? <><Wifi size={18} /> Online</> : <><WifiOff size={18} /> Offline ({pendingSync})</>}
+    </button>
+  );
+};
+
+// --- HLAVNÍ LOGIKA PŘEPÍNÁNÍ ---
+const AppContent = () => {
+  const { user, loading } = useContext(AppContext);
+  const { currentMode } = useAppStore();
   
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading...</div>;
   if (!user) return <AuthScreen />;
   
-  // ZDE BYLA CHYBA: Chybělo předání funkce onExit
-  if (viewMode === 'senior') {
-    return <BioRhythmicDashboard onExit={() => setViewMode('carer')} />;
-  }
+  // ZDE SE ROZHODUJE podle zvolené role:
+  if (currentMode === 'PATIENT') return <PatientMode />; // Grandpad
+  if (currentMode === 'NURSE') return <NurseMode />; // Clinical Cockpit
   
+  // Pro FAMILY vrátíme váš původní, komplexní Dashboard
   return <CarerDashboard />;
 };
 
 export default function App() {
   if (!isConfigured) return <SetupScreen />;
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ErrorBoundary FallbackComponent={EmergencyFallback}>
+      <AppProvider>
+        <RoleSelector />
+        <OfflineIndicator />
+        <AppContent />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
