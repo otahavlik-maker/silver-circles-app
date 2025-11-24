@@ -1,0 +1,10 @@
+{
+    "greeting": {
+      "good_morning": "Good Morning, Elsie.",
+      "good_evening": "Good Evening, Elsie."
+    },
+    "actions": {
+      "drink_water": "Drink Water",
+      "emergency": "SOS / EMERGENCY"
+    }
+  }

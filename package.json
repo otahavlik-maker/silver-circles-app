@@ -17,7 +17,10 @@
     "zustand": "^4.5.0",
     "react-error-boundary": "^4.0.12",
     "framer-motion": "^11.0.3",
-    "date-fns": "^3.3.1"
+    "date-fns": "^3.3.1",
+    "i18next": "^23.7.18",
+    "react-i18next": "^14.0.0",
+    "i18next-browser-languagedetector": "^7.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

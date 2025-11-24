@@ -1,0 +1,10 @@
+{
+    "greeting": {
+      "good_morning": "Dobré ráno, Elsi.",
+      "good_evening": "Dobrý večer, Elsi."
+    },
+    "actions": {
+      "drink_water": "Napít se",
+      "emergency": "SOS / NOUZOVÝ STAV"
+    }
+  }
