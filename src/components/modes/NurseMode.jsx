@@ -1,10 +1,19 @@
+// src/components/modes/NurseMode.jsx - FINAL REPAIRED VERSION with Modules
+
 import React, { useState } from 'react';
-import { Activity, MapPin, Mic, FileText, ChevronRight, AlertTriangle, Layers } from 'lucide-react';
-import GhostCamera from '../features/GhostCamera'; // <--- NOVÝ IMPORT
+import { Activity, MapPin, Mic, FileText, ChevronRight, AlertTriangle, Layers, X } from 'lucide-react';
+import GhostCamera from '../features/GhostCamera'; 
+import SbarTriageModule from '../SbarTriageModule'; 
+
+// KLINICKÉ MODULY - OPRAVENÁ CESTA k App.jsx!
+import { VitalsModule } from '../../App'; // <--- OPRAVENO: ../../App
+import ClinicalMedicationManager from '../ClinicalMedicationManager';
+import TreatmentsLogModule from '../TreatmentsLogModule';
 
 const NurseMode = () => {
-  const [showGhostCam, setShowGhostCam] = useState(false); // Stav pro kameru
-
+  const [showGhostCam, setShowGhostCam] = useState(false); 
+  const [showSbarModule, setShowSbarModule] = useState(false);
+  
   const [patients, setPatients] = useState([
     { 
       id: 1, 
@@ -18,7 +27,7 @@ const NurseMode = () => {
     },
     { 
       id: 2, 
-      name: 'Otakar (79)', 
+      name: 'Arthur (79)', 
       condition: 'Leg Ulcer', 
       acuity: 'P2', 
       status: 'STABLE', 
@@ -29,24 +38,15 @@ const NurseMode = () => {
   ]);
 
   const [activePatient, setActivePatient] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [note, setNote] = useState('');
 
-  const toggleRecording = () => {
-    if (!isRecording) {
-      setIsRecording(true);
-      setNote('Listening...');
-      setTimeout(() => {
-        setIsRecording(false);
-        setNote(`
-[AI GENERATED SBAR NOTE]
-S (Situation): Patient found confused and dizzy. Blood Glucose 14.2 mmol/L. BP 160/95.
-B (Background): 82y female, Type 2 Diabetes. Missed morning insulin dose.
-A (Assessment): Hyperglycemia symptomatic. Patient is deteriorating (P1).
-R (Recommendation): Administered 10U Novorapid stat. Will monitor for 1hr.
-        `.trim());
-      }, 2500);
-    }
+  const openSbarForPatient = (patient) => {
+    setActivePatient(patient);
+    setShowSbarModule(true);
+  };
+  
+  const closeSbarModule = () => {
+    setActivePatient(null);
+    setShowSbarModule(false);
   };
 
   return (
@@ -73,6 +73,8 @@ R (Recommendation): Administered 10U Novorapid stat. Will monitor for 1hr.
       </header>
 
       <div className="p-4 space-y-4 max-w-2xl mx-auto">
+        
+        {/* Patient Cards (P1/P2) */}
         {patients.map((p) => (
           <div key={p.id} className={`rounded-xl border-l-8 shadow-sm bg-white overflow-hidden transition-all ${p.acuity === 'P1' ? 'border-red-600 ring-1 ring-red-100' : 'border-amber-500'}`}>
             <div className="p-5">
@@ -98,11 +100,10 @@ R (Recommendation): Administered 10U Novorapid stat. Will monitor for 1hr.
               </div>
 
               <div className="flex gap-3">
-                <button onClick={() => setActivePatient(p)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2">
+                <button onClick={() => openSbarForPatient(p)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2">
                   <Mic size={18} /> Note
                 </button>
                 
-                {/* Tlačítko pro Ghost Camera (jen pro P2 pacienta s vředem - Arthura) */}
                 {p.id === 2 && (
                   <button onClick={() => setShowGhostCam(true)} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2">
                     <Layers size={18} /> Wound Tracker
@@ -112,20 +113,24 @@ R (Recommendation): Administered 10U Novorapid stat. Will monitor for 1hr.
             </div>
           </div>
         ))}
+        
+        {/* KLINICKÉ MODULY - NYNÍ ZDE, PŘÍMO POD PATIENT CARDS! */}
+        <VitalsModule />
+        <ClinicalMedicationManager />
+        <TreatmentsLogModule />
+
       </div>
 
-      {/* Modal Voice Note (Zůstává stejný) */}
-      {activePatient && (
+      {/* NEW MODAL: SbarTriageModule */}
+      {showSbarModule && activePatient && (
         <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-end sm:justify-center p-4">
           <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-10">
             <div className="bg-blue-600 p-4 text-white flex justify-between items-center">
-              <h3 className="font-bold flex items-center gap-2"><FileText size={20} /> New Note: {activePatient.name}</h3>
-              <button onClick={() => { setActivePatient(null); setNote(''); }} className="text-white/80 hover:text-white">Close</button>
+              <h3 className="font-bold flex items-center gap-2"><FileText size={20} /> SBAR Report: {activePatient.name}</h3>
+              <button onClick={closeSbarModule} className="text-white/80 hover:text-white"><X size={20} /></button>
             </div>
-            <div className="p-8 text-center">
-              {!note && !isRecording && <div className="text-slate-500 mb-8"><p>Tap microphone to dictate.</p><p className="text-xs mt-2">AI will format to SBAR structure.</p></div>}
-              <button onClick={toggleRecording} className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 transition-all ${isRecording ? 'bg-red-500 animate-pulse shadow-red-300' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`}><Mic size={40} className={isRecording ? 'text-white' : ''} /></button>
-              {note && <div className="bg-slate-100 p-4 rounded-xl text-left font-mono text-sm text-slate-800 border-l-4 border-emerald-500 h-48 overflow-y-auto mb-6"><pre className="whitespace-pre-wrap font-sans">{note}</pre></div>}
+            <div className="p-4 sm:p-6 max-h-[80vh] overflow-y-auto">
+                <SbarTriageModule patient={activePatient} onClose={closeSbarModule} />
             </div>
           </div>
         </div>

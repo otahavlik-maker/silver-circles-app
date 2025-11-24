@@ -9,8 +9,9 @@ import { useAppStore } from './store/useAppStore';
 import EmergencyFallback from './components/atoms/EmergencyFallback';
 import PatientMode from './components/modes/PatientMode';
 import NurseMode from './components/modes/NurseMode';
-import { Button, Card } from './components/atoms/LayoutComponents'; // OPRAVENÝ IMPORT
+import { Button, Card } from './components/atoms/LayoutComponents'; 
 import SbarTriageModule from './components/SbarTriageModule'; 
+import TreatmentsLogModule from './components/TreatmentsLogModule'; 
 
 // NEWS2 LOGIC
 import { calculateNEWS2, SCORING_MATRIX } from './utils/NEWS2Score';
@@ -27,7 +28,7 @@ import {
   getFirestore,
   collection,
   query,
-  orderBy,
+  orderBy, 
   limit,
   addDoc,
   serverTimestamp,
@@ -249,8 +250,13 @@ export const useDataCollection = (collectionName, constraints = []) => {
   return { data, add, remove };
 };
 
+// OPRAVA! Exportujeme orderBy a limit pro použití v jiných komponentách (TreatmentsLogModule atd.)
+export { orderBy, limit };
+
+
 // --- VITAL SIGNS MODULE (NEWS2) - Exported for shared use ---
 export const VitalsModule = () => {
+  // Nyní orderBy a limit fungují
   const { data: vitals, add, remove } = useDataCollection('news_vitals', [orderBy('createdAt', 'desc'), limit(5)]);
   
   const [inputs, setInputs] = useState({
@@ -508,7 +514,6 @@ const CarerDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* ClinicalMedicationManager odtud odstraňujeme! */}
           <HybridMailInterface />
           <ExpenseLedger />
         </div>
@@ -563,25 +568,24 @@ const AppContent = () => {
   // ZDE SE ROZHODUJE podle zvolené role:
   if (currentMode === 'PATIENT') return <PatientMode />; // Grandpad
   
-  // Nurse Mode: Nurse Dashboard, NEWS2 a Clinical Meds pod ním.
+  // Nurse Mode: Vykreslíme POUZE NurseMode (moduly jsou nyní uvnitř NurseMode.jsx)
   if (currentMode === 'NURSE') return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <NurseMode /> 
-      <div className="max-w-2xl mx-auto p-4 space-y-6">
-          <VitalsModule /> 
-          <ClinicalMedicationManager /> {/* PŘIDÁNO ZDE! */}
-      </div>
-    </>
+      {/* Moduly jsou nyní v NurseMode, ale NurseMode.jsx musí být upraven, aby renderoval moduly 
+          v rámci své scrollable části. Prozatím je necháme v NurseMode.jsx, jak je v KROKU 27.B. 
+          Tento div níže je redundantní, pokud je NurseMode upraven v KROKU 27.B.
+      */}
+    </div>
   );
   
-  // Family/Admin Mode: Pouze Carer Dashboard (NENÍ ZDE ŽÁDNÝ KLINICKÝ NÁSTROJ)
+  // Family/Admin Mode: Pouze Carer Dashboard
   return (
     <CarerDashboard />
   );
 };
 
 export default function App() {
-// ... zbytek souboru (beze změny)
   if (!isConfigured) return <SetupScreen />;
   return (
     <ErrorBoundary FallbackComponent={EmergencyFallback}>

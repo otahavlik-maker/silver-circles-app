@@ -1,19 +1,20 @@
-// src/components/TreatmentsLogModule.jsx
+// src/components/TreatmentsLogModule.jsx - OPRAVENÝ IMPORT
 
 import React, { useState } from 'react';
 import { Button, Card } from './atoms/LayoutComponents'; 
-import { useDataCollection } from '../App'; 
+// DŮLEŽITÉ: Importujeme useDataCollection A NAVÍC orderBy a limit
+import { useDataCollection, orderBy, limit } from '../App'; 
 import { Syringe, Stethoscope, ClipboardList, Plus, X } from 'lucide-react';
 
 /**
  * TreatmentsLogModule - Modul pro zaznamenávání provedených léčebných akcí a intervencí.
- * (Např. Injekce, převazy, fyzioterapie, péče o sondu.)
  */
 const TreatmentsLogModule = () => {
+  // Nyní jsou orderBy a limit dostupné pro tento hovor:
   const { data: treatments, add, remove } = useDataCollection('treatments_log', [orderBy('createdAt', 'desc'), limit(5)]);
   
   const [treatment, setTreatment] = useState('');
-  const [intervention, setIntervention] = useState('Injection'); // Defaultní typ
+  const [intervention, setIntervention] = useState('Injection'); 
 
   const logTreatment = async () => {
     if (!treatment) {
