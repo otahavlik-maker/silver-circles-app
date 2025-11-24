@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Sun, Moon, Sunset, Coffee, GlassWater, AlertCircle, Lightbulb, LogOut, Dumbbell } from 'lucide-react';
-import SilverGym from './SilverGym'; // <--- IMPORT TĚLOCVIČNY
+import { Sun, Moon, Sunset, Coffee, GlassWater, AlertCircle, Lightbulb, LogOut, Dumbbell, QrCode, Users } from 'lucide-react';
+import SilverGym from './SilverGym';
+import SmartHomeHub from './SmartHomeHub';
+import VillageSocial from './VillageSocial'; // <--- NOVÝ IMPORT
 
 // Sub-component: The Virtual Dog
 const PupPal = ({ hydrationLevel }) => {
@@ -30,9 +32,12 @@ const PupPal = ({ hydrationLevel }) => {
 const BioRhythmicDashboard = ({ onExit }) => {
   const [simulatedHour, setSimulatedHour] = useState(10); 
   const [hydration, setHydration] = useState(60);
-  const [showGym, setShowGym] = useState(false); // <--- STAV PRO TĚLOCVIČNU
+  
+  // Modals State
+  const [showGym, setShowGym] = useState(false);
+  const [showSmartHome, setShowSmartHome] = useState(false);
+  const [showVillage, setShowVillage] = useState(false); // <--- NOVÝ STAV
 
-  // Determine the Phase based on Hour
   const getPhase = (hour) => {
     if (hour >= 20 || hour < 6) return 'NIGHT';
     if (hour >= 16) return 'DUSK';
@@ -41,7 +46,6 @@ const BioRhythmicDashboard = ({ onExit }) => {
 
   const phase = getPhase(simulatedHour);
 
-  // Theme Configuration
   const themes = {
     DAY: {
       bg: 'bg-indigo-50',
@@ -75,8 +79,10 @@ const BioRhythmicDashboard = ({ onExit }) => {
   return (
     <div className={`min-h-screen transition-colors duration-1000 ${currentTheme.bg} ${currentTheme.text} flex flex-col p-6 relative`}>
       
-      {/* OVERLAY: Silver Gym */}
+      {/* OVERLAYS */}
       {showGym && <SilverGym onClose={() => setShowGym(false)} />}
+      {showSmartHome && <SmartHomeHub onClose={() => setShowSmartHome(false)} />}
+      {showVillage && <VillageSocial onClose={() => setShowVillage(false)} />} {/* <--- NOVÝ MODÁL */}
 
       {/* Dev Controls */}
       <div className="mb-6 p-2 bg-white/20 backdrop-blur border border-white/30 rounded-xl flex gap-2 text-xs justify-center items-center shadow-lg">
@@ -126,7 +132,6 @@ const BioRhythmicDashboard = ({ onExit }) => {
             <span className="font-bold text-xl">Drink</span>
           </button>
 
-          {/* NEW: EXERCISE BUTTON */}
           <button 
             onClick={() => setShowGym(true)}
             className="bg-white text-emerald-800 p-6 rounded-3xl shadow-lg active:scale-95 transition-transform flex flex-col items-center gap-2 col-span-1 border-2 border-emerald-100"
@@ -135,12 +140,29 @@ const BioRhythmicDashboard = ({ onExit }) => {
             <span className="font-bold text-xl">Exercise</span>
           </button>
 
+          <button 
+            onClick={() => setShowSmartHome(true)}
+            className="bg-white text-slate-800 p-6 rounded-3xl shadow-lg active:scale-95 transition-transform flex flex-col items-center gap-2 col-span-1 border-2 border-slate-100"
+          >
+            <QrCode size={48} className="text-blue-600" />
+            <span className="font-bold text-xl">My Home</span>
+          </button>
+
+          {/* NOVÉ TLAČÍTKO: VILLAGE SOCIAL */}
+          <button 
+            onClick={() => setShowVillage(true)}
+            className="bg-white text-indigo-900 p-6 rounded-3xl shadow-lg active:scale-95 transition-transform flex flex-col items-center gap-2 col-span-1 border-2 border-indigo-100"
+          >
+            <Users size={48} className="text-indigo-600" />
+            <span className="font-bold text-xl">Friends</span>
+          </button>
+
           <div className="col-span-2 bg-white/50 p-6 rounded-3xl text-center border-2 border-white/50">
              <h3 className="font-bold text-lg mb-2">Dr. Ada says:</h3>
              <p className="text-lg leading-relaxed">
                {hydration < 50 
-                 ? "Arthur, please have a glass of water. Your dog looks thirsty!" 
-                 : "Great job! Now, how about some light exercise?"}
+                 ? "Arthur, please have a glass of water." 
+                 : "Why not visit 'Friends' to see if anyone is chatting?"}
              </p>
           </div>
         </div>

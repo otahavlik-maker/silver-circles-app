@@ -20,29 +20,10 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import {
-  Activity,
-  Shield,
-  Users,
-  Bell,
-  Menu,
-  X,
-  LogOut,
-  Settings,
-  ChevronRight,
-  Heart,
-  Phone,
-  Calendar,
-  Lock,
-  User,
-  AlertCircle,
-  CheckCircle2,
-  Plus,
-  Camera,
-  Syringe,      // NOVÉ
-  Pill,         // NOVÉ
-  ShieldAlert,  // NOVÉ
-  Clock,        // NOVÉ
-  AlertTriangle // NOVÉ
+  Activity, Shield, Users, Bell, Menu, X, LogOut, Settings, ChevronRight,
+  Heart, Phone, Calendar, Lock, User, AlertCircle, CheckCircle2, Plus,
+  Camera, Syringe, Pill, ShieldAlert, Clock, AlertTriangle,
+  Eye, Calculator, HeartPulse, Battery, MessageSquare // <--- NOVÉ IKONY
 } from 'lucide-react';
 import HybridMailInterface from './components/HybridMailInterface';
 import ExpenseLedger from './components/ExpenseLedger';
@@ -52,11 +33,23 @@ import BioRhythmicDashboard from './components/BioRhythmicDashboard';
 import LegalVaultAccess from './components/LegalVaultAccess';
 import ARMemoryWall from './components/ARMemoryWall';
 import ClinicalMedicationManager from './components/ClinicalMedicationManager';
+import LegacyManager from './components/LegacyManager';
+import SmartDoorbellStream from './components/SmartDoorbellStream';
+import CareFundingCalculator from './components/CareFundingCalculator';
+import CarerBurnoutTracker from './components/CarerBurnoutTracker';
 const CarerDashboard = () => {
   const { unlockVault, encryptionKey, setViewMode } = useContext(AppContext);
   const [pwd, setPwd] = useState('');
+  
+  // Existing Modals
   const [showMemorial, setShowMemorial] = useState(false);
-  const [showAR, setShowAR] = useState(false); // New State for AR
+  const [showAR, setShowAR] = useState(false);
+  const [showLegacy, setShowLegacy] = useState(false);
+
+  // NEW Defensive Modals
+  const [showDoorbell, setShowDoorbell] = useState(false);
+  const [showFinance, setShowFinance] = useState(false);
+  const [showBurnout, setShowBurnout] = useState(false);
 
   if (!encryptionKey)
     return (
@@ -85,11 +78,15 @@ const CarerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 relative">
-      {/* OVERLAY: Memorial Mode */}
+      {/* OVERLAYS: ORIGINAL */}
       {showMemorial && <MemorialMode onClose={() => setShowMemorial(false)} />}
-      
-      {/* OVERLAY: AR Memory Wall */}
       {showAR && <ARMemoryWall onClose={() => setShowAR(false)} />}
+      {showLegacy && <LegacyManager onClose={() => setShowLegacy(false)} />}
+      
+      {/* OVERLAYS: DEFENSIVE (NEW) */}
+      {showDoorbell && <SmartDoorbellStream onClose={() => setShowDoorbell(false)} />}
+      {showFinance && <CareFundingCalculator onClose={() => setShowFinance(false)} />}
+      {showBurnout && <CarerBurnoutTracker onClose={() => setShowBurnout(false)} />}
 
       <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center">
         <h1 className="font-bold text-slate-800 flex items-center gap-2">
@@ -121,10 +118,35 @@ const CarerDashboard = () => {
         {/* Sphere 5: Civic Radar */}
         <CivicDashboard />
 
+        {/* DEFENSE & WELLBEING GRID (NEW) */}
+        <div className="grid grid-cols-3 gap-3">
+          <button 
+            onClick={() => setShowDoorbell(true)}
+            className="bg-slate-800 text-white p-3 rounded-xl flex flex-col items-center justify-center gap-2 text-xs font-bold shadow-lg hover:bg-black transition-colors"
+          >
+            <Eye className="text-red-400 animate-pulse" />
+            Doorbell Cam
+          </button>
+          <button 
+            onClick={() => setShowFinance(true)}
+            className="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl flex flex-col items-center justify-center gap-2 text-xs font-bold shadow-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+          >
+            <Calculator className="text-emerald-500" />
+            Care Funding
+          </button>
+          <button 
+            onClick={() => setShowBurnout(true)}
+            className="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl flex flex-col items-center justify-center gap-2 text-xs font-bold shadow-sm hover:bg-rose-50 hover:text-rose-700 transition-colors"
+          >
+            <HeartPulse className="text-rose-500" />
+            My Wellbeing
+          </button>
+        </div>
+
         {/* Core Modules Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <VitalsModule />
-          <ClinicalMedicationManager /> {/* <--- TOTO JSME ZMĚNILI */}
+          <ClinicalMedicationManager />
           <HybridMailInterface />
           <ExpenseLedger />
         </div>
@@ -134,7 +156,7 @@ const CarerDashboard = () => {
           <LegalVaultAccess />
         </div>
 
-        {/* Sphere 7 & 8: Advanced Footer */}
+        {/* Legacy Footer */}
         <div className="pt-12 border-t border-slate-200 mt-8">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
             Future & Legacy Protocols
@@ -145,14 +167,20 @@ const CarerDashboard = () => {
               className="w-full py-3 bg-slate-900 text-white rounded-xl text-sm hover:bg-slate-800 flex items-center justify-center gap-2 transition-colors shadow-lg shadow-slate-300"
             >
               <Camera size={16} />
-              Launch AR Memory Wall (Beta)
+              Launch AR Memory Wall
+            </button>
+
+            <button 
+              onClick={() => setShowLegacy(true)}
+              className="w-full py-3 bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-sm hover:bg-amber-200 flex items-center justify-center gap-2 transition-colors"
+            >
+              Manage Family Legacy
             </button>
             
             <button 
               onClick={() => setShowMemorial(true)}
               className="w-full py-3 border border-slate-300 rounded-xl text-slate-500 text-sm hover:bg-slate-100 flex items-center justify-center gap-2 transition-colors"
             >
-              <Lock size={14} />
               Access Sunset Protocol
             </button>
           </div>
