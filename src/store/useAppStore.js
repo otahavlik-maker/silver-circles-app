@@ -14,7 +14,17 @@ export const useAppStore = create((set) => ({
   // 1. Identita a Role
   currentUser: { name: 'Elsie', age: 82, condition: 'Type 2 Diabetes' },
   currentMode: 'PATIENT', // Možnosti: 'PATIENT' | 'NURSE' | 'FAMILY'
-  setMode: (mode) => set({ currentMode: mode }),
+  setMode: (mode) => {
+    set({ currentMode: mode });
+
+    // --- Synchronizace pro AppContext (přepínání režimů) ---
+    try {
+      const event = new CustomEvent('app:viewModeChange', { detail: mode });
+      window.dispatchEvent(event);
+    } catch (err) {
+      console.warn('Mode sync failed:', err);
+    }
+  },
 
   // 2. Offline-First Logika (Stav sítě)
   isOnline: true,
